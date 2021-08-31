@@ -1,0 +1,56 @@
+body {
+  text-align: center;
+  margin: auto;
+  max-width: 1000px;
+  background-color: rgb(226, 230, 238);
+}
+
+#main-header {
+  text-decoration: dashed;
+  font-weight: 900;
+  color: crimson;
+  text-shadow: 1px 1px 1px darkslateblue;
+}
+
+.settings {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 10px;
+  text-align-last: left;
+}
+
+.bordered {
+  border: solid 2px;
+  border-radius: 10px;
+  border-color: darkslateblue;
+  box-shadow: 3px 3px 1px rgb(102, 100, 100);
+  padding: 10px;
+}
+
+.other-size {
+  display: none;
+}
+
+.submit-container {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  text-align: center;
+}
+
+.submit {
+  margin: auto;
+  width: 100%;
+  text-align-last: auto;
+  text-align: center;
+}
+.canvas-wrapper {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#canvas {
+  border: black solid;
+}

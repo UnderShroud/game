@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Игра крестики-нолики</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+
+<body>
+  <header class="header">
+    <h1 id="main-header">Настройки игры</h1>
+  </header>
+  <form class="settings">
+    <div class="game-size bordered">
+      <h2>Размеры поля</h2>
+      <p><input type="radio" name="size" id="size4" value="4" checked>4&times;4</p>
+      <p><input type="radio" name="size" id="size5" value="5">5&times;5</p>
+      <p><input type="radio" name="size" id="size6" value="6">6&times;6</p>
+      <p><input type="radio" name="size" id="other" value="">Другое</p>
+      <div class="other-size">
+        <p>Введите количество ячеек в длину</р>
+          <input type="number" name="size_alt" id="y-size" placeholder="3-10" min="3" max="10">
+        <p>Введите количество ячеек в ширину</р>
+          <input type="number" name="size_alt" id="x-size" placeholder="3-10" min="3" max="10">
+      </div>
+    </div>
+    <div class="players-info bordered">
+      <h2>Настройки игроков</h2>
+      <p><input type="radio" name="is_AI" id="pvp" value="false" checked>Player vs Player</p>
+      <p><input type="radio" name="is_AI" id="pve" value="true">Player vs AI</p>
+      <hr>
+      <h2>Имя первого игрока</h2>
+      <input type="text" name="player_1" id="player_1" placeholder="Player 1">
+      <h2>Имя второго игрока</h2>
+      <input type="text" name="player_2" id="player_2" placeholder="Player 2" style="margin-block-end: 2em;">
+    </div>
+    <div class="submit-container">
+      <button type="button" class="submit bordered">
+        <h4>Поехали!</h4>
+      </button>
+    </div>
+    <div class="canvas-wrapper">
+      <canvas id='canvas' height="1000px" width="1000px">
+      </canvas>
+    </div>
+  </form>
+</body>
+
+</html>
