@@ -5,6 +5,7 @@ const gameSize = document.querySelector(".game-size");
 const other = document.getElementById("other");
 const otherSize = document.querySelector(".other-size");
 const buttonSubmit = document.querySelector(".submit");
+let game, p1, p2, players;
 
 //открываем или закрываем доступ к кастомным размерам поля
 gameSize.addEventListener("click", () => {
@@ -21,7 +22,7 @@ buttonSubmit.addEventListener("click", startGame);
 function startGame() {
   const state = readForm();
   renameButton();
-  const [game, p1, p2, players] = initObjects(state);
+  [game, p1, p2, players] = initObjects(state);
   console.log(game);
   gameIsOn(game, players);
 }
@@ -59,9 +60,9 @@ function renameButton() {
 }
 
 function initObjects(state) {
-  const game = new Game(state);
-  const p1 = new Player(state["p1Name"], state, render.cross);
-  const p2 = game.isAI
+  game = new Game(state);
+  p1 = new Player(state["p1Name"], state, render.cross);
+  p2 = game.isAI
     ? new AI(state["p2Name"], state, render.circle)
     : new Player(state["p2Name"], state, render.circle);
   const players = [p1, p2];
@@ -72,48 +73,76 @@ function initObjects(state) {
 //Здесь жара!!! Основа геймплея здесь
 async function gameIsOn(game, players) {
   render.currentState(game, players);
+  let xCell, yCell, currentPlayer;
+  //если с ботом и у него первый ход
+  if (players[game.currentTurn].constructor.name == "AI" && game.turn == 1) {
+    currentPlayer = players[game.currentTurn];
+    [xCell, yCell] = [
+      Math.round((game.xCellSize - 1) * Math.random()),
+      Math.round((game.yCellSize - 1) * Math.random()),
+    ];
+    game.state[xCell][yCell] = true;
+    currentPlayer.state[xCell][yCell] = true;
+    currentPlayer.check(xCell, yCell);
+    game.nextTurn();
+    render.currentState(game, players);
+  }
+
   canvas.addEventListener("mousedown", (event) => {
     let [x, y] = getCoordinates(canvas, event);
     console.log([x, y]);
     let cell = getCellCoordinates([x, y]);
-    let [xCell, yCell] = cell;
+    [xCell, yCell] = cell;
     //если клик обоснован (игра идет, поле не закрашено)
     if (
       !(yCell === undefined) &&
       !game.state[xCell][yCell] &&
-      !game.isFinished()
+      !game.isFinished &&
+      players[game.currentTurn].constructor.name == "Player"
     ) {
       game.state[xCell][yCell] = true;
-      const currentPlayer = players[game.currentTurn];
+      currentPlayer = players[game.currentTurn];
+      render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
 
       currentPlayer.check(xCell, yCell);
+
       render.currentState(game, players);
       if (currentPlayer.checkWinner()) {
         currentPlayer.congratulation();
-        game.turn = game.area;
-        return;
-      }
-      if (game.isFinished()) {
-        console.log("Ничья!");
+        game.isFinished = true;
         return;
       }
       game.nextTurn();
       render.currentState(game, players);
     }
+    //если с ботом
+    if (players[game.currentTurn].constructor.name == "AI") {
+      currentPlayer = players[game.currentTurn];
+      console.log(currentPlayer.randomTurn(game));
+      [xCell, yCell] = currentPlayer.randomTurn(game);
+
+      game.state[xCell][yCell] = true;
+      render.currentState(game, players);
+      currentPlayer.state[xCell][yCell] = true;
+
+      currentPlayer.check(xCell, yCell);
+
+      if (currentPlayer.checkWinner()) {
+        currentPlayer.congratulation();
+        game.isFinished = true;
+        return;
+      }
+      game.nextTurn();
+      render.currentState(game, players);
+    }
+    if (game.draw()) {
+      render.clear();
+      render.textHeader("Ничья!");
+      game.isFinished = true;
+      return;
+    }
   });
-  /*
-  canvas.addEventListener("mousedown", (e) => {
-    console.log(
-      "Клик в позиции " +
-        getCoordinates(canvas, e) +
-        " игроком " +
-        players[game.currentTurn].name
-    );
-    
-    //const coordiantes = getCoordinates(canvas, e);
-  });
-  */
 }
 
 const render = {
@@ -163,7 +192,7 @@ const render = {
       ctx.stroke();
     }
 
-    for (var i = 1; i < xCellSize; i++) {
+    for (var i = 1; i < yCellSize; i++) {
       ctx.beginPath();
       ctx.moveTo(can.gap, can.cellSize * i + can.headerHeight);
       ctx.lineTo(canvas.width - can.gap, can.cellSize * i + can.headerHeight);
@@ -221,6 +250,7 @@ const render = {
     );
     ctx.stroke();
   },
+  //анимированная рисовка
 };
 
 ////////////////////////////
@@ -241,15 +271,12 @@ class Game {
     }
     this.currentTurn = Math.round(Math.random());
     this.area = this.xCellSize * this.yCellSize;
+    this.isFinished = false;
   }
 
   nextTurn() {
     this.currentTurn = (this.currentTurn + 1) % 2;
     this.turn++;
-  }
-
-  record(xCell, yCell) {
-    this.state[xCell][yCell];
   }
 
   initCanvas() {
@@ -261,17 +288,8 @@ class Game {
     render.grid(this.xCellSize, this.yCellSize);
   }
 
-  async turn() {
-    canvas.addEventListener("mousedown", (event) => {
-      let [x, y] = getCoordinates(canvas, event);
-      let cell = getCellCoordinates([x, y]);
-      let [xCell, yCell] = cell;
-      if (cell && !this.state[xCell][yCell]) return [xCell, yCell];
-    });
-  }
-
-  isFinished() {
-    return this.area == this.turn;
+  draw() {
+    return this.area < this.turn;
   }
 }
 
@@ -295,10 +313,25 @@ class Player {
       for (let j = 0; j < this.yCellSize - 2; j++) {
         return (
           (this.state[i][j] && this.state[i + 1][j] && this.state[i + 2][j]) ||
+          (this.state[i][j + 1] &&
+            this.state[i + 1][j + 1] &&
+            this.state[i + 2][j + 1]) ||
+          (this.state[i][j + 2] &&
+            this.state[i + 1][j + 2] &&
+            this.state[i + 2][j + 2]) ||
+          (this.state[i][j] && this.state[i][j + 1] && this.state[i][j + 2]) ||
+          (this.state[i + 1][j] &&
+            this.state[i + 1][j + 1] &&
+            this.state[i + 1][j + 2]) ||
+          (this.state[i + 2][j] &&
+            this.state[i + 2][j + 1] &&
+            this.state[i + 2][j + 2]) ||
           (this.state[i][j] &&
             this.state[i + 1][j + 1] &&
             this.state[i + 2][j + 2]) ||
-          (this.state[i][j] && this.state[i][j + 1] && this.state[i][j + 2])
+          (this.state[i][j + 2] &&
+            this.state[i + 1][j + 1] &&
+            this.state[i + 2][j])
         );
       }
     }
@@ -311,6 +344,26 @@ class Player {
 
   check(x, y) {
     callbackAnimation(x, y);
+  }
+}
+
+class AI extends Player {
+  constructor(name, state, callbackAnimation) {
+    super(name, state, callbackAnimation);
+  }
+
+  randomTurn(game) {
+    const turnsLeft = game.area - game.turn;
+    const randomTurn = Math.round(turnsLeft * Math.random());
+    const arr = [];
+    for (let i = 0; i < game.xCellSize; i++) {
+      for (let j = 0; j < game.yCellSize; j++) {
+        if (!game.state[i][j]) {
+          arr.push([i, j]);
+        }
+      }
+    }
+    return arr[Math.floor(Math.random() * arr.length)];
   }
 }
 //свойства постороения
