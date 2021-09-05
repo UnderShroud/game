@@ -34,9 +34,9 @@ function readForm() {
   state["isAI"] = isAI[0].checked ? false : true;
   //Players names
   state["p1Name"] =
-    document.getElementsByName("player_1")[0].value || "Player 1";
+    document.getElementsByName("player_1")[0].value || "Игрок 1";
   state["p2Name"] =
-    document.getElementsByName("player_2")[0].value || "Player 2";
+    document.getElementsByName("player_2")[0].value || "Игрок 2";
   //Field size
   const size = document.getElementsByName("size");
   if (size[3].checked) {
