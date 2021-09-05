@@ -80,7 +80,7 @@ async function gameIsOn(game, players) {
     ];
     game.state[xCell][yCell] = true;
     currentPlayer.state[xCell][yCell] = true;
-    currentPlayer.check(xCell, yCell);
+    currentPlayer.check(xCell, yCell, 1);
     game.nextTurn();
     render.currentState(game, players);
   }
@@ -102,8 +102,8 @@ async function gameIsOn(game, players) {
       render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
       //здесь могла быть анимация
-      currentPlayer.check(xCell, yCell);
-      render.currentState(game, players);
+      currentPlayer.check(xCell, yCell, 0.8);
+      //render.currentState(game, players);
       //здесь могла быть анимация
       if (currentPlayer.checkWinner()) {
         currentPlayer.congratulation();
@@ -123,7 +123,7 @@ async function gameIsOn(game, players) {
       render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
       //здесь могла быть анимация
-      currentPlayer.check(xCell, yCell);
+      currentPlayer.check(xCell, yCell, 1);
       render.currentState(game, players);
       //здесь могла быть анимация
       if (currentPlayer.checkWinner()) {
@@ -180,7 +180,7 @@ const render = {
       for (let j = 0; j < game.yCellSize; j++) {
         for (let k = 0; k < players.length; k++) {
           if (players[k].state[i][j]) {
-            players[k].check(i, j);
+            players[k].check(i, j, 1);
           }
         }
       }
@@ -226,29 +226,43 @@ const render = {
       canvas.width - 2 * can.gap
     );
   },
-  cross: (x, y) => {
-    ctx.beginPath();
-    ctx.moveTo(
+  cross: (x, y, progress) => {
+    //progress from 0 to 1
+    const firstHalfProgress = progress > 0.5 ? 1 : progress * 2;
+    const secondHalfProgress = progress > 0.5 ? progress * 2 - 1 : 0;
+    render.crossFirst(x, y, firstHalfProgress);
+    render.crossSecond(x, y, secondHalfProgress);
+  },
+  crossFirst: (x, y, progress) => {
+    const [x0, y0] = [
       can.gap + can.cellSize * x,
-      can.gap + can.headerHeight + can.cellSize * y
-    );
-    ctx.lineTo(
+      can.gap + can.headerHeight + can.cellSize * y,
+    ];
+    const [x1, y1] = [
       -can.gap + can.cellSize * (x + 1),
-      -can.gap + can.headerHeight + can.cellSize * (y + 1)
-    );
-    ctx.stroke();
+      -can.gap + can.headerHeight + can.cellSize * (y + 1),
+    ];
     ctx.beginPath();
-    ctx.moveTo(
-      can.gap + can.cellSize * x,
-      -can.gap + can.headerHeight + can.cellSize * (y + 1)
-    );
-    ctx.lineTo(
-      -can.gap + can.cellSize * (x + 1),
-      can.gap + can.headerHeight + can.cellSize * y
-    );
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x0 + (x1 - x0) * +progress, y0 + (y1 - y0) * +progress);
     ctx.stroke();
   },
-  circle: (x, y) => {
+  crossSecond: (x, y, progress) => {
+    const [x0, y0] = [
+      can.gap + can.cellSize * x,
+      -can.gap + can.headerHeight + can.cellSize * (y + 1),
+    ];
+    const [x1, y1] = [
+      -can.gap + can.cellSize * (x + 1),
+      can.gap + can.headerHeight + can.cellSize * y,
+    ];
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x0 + (x1 - x0) * progress, y0 + (y1 - y0) * progress);
+    ctx.stroke();
+  },
+  //
+  circle: (x, y, progress) => {
     ctx.beginPath();
     ctx.arc(
       can.cellSize * (x + 1 / 2),
@@ -378,7 +392,7 @@ class Game {
 
 class Player {
   constructor(name, state, callbackAnimation) {
-    this.check = callbackAnimation;
+    this.callbackAnimation = callbackAnimation;
     this.name = name;
     this.state = [];
     this.xCellSize = state["cellsInRow"];
@@ -429,8 +443,8 @@ class Player {
     render.textHeader(this.name + " выиграл!!!");
   }
 
-  check(x, y) {
-    callbackAnimation(x, y);
+  check(x, y, progress) {
+    this.callbackAnimation(x, y, progress);
   }
 }
 
