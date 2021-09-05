@@ -5,6 +5,14 @@ body {
   background-color: rgb(226, 230, 238);
 }
 
+p {
+  text-align: left;
+}
+
+h2 {
+  text-align: center;
+}
+
 #main-header {
   text-decoration: dashed;
   font-weight: 900;
@@ -16,7 +24,6 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 10px;
-  text-align-last: left;
 }
 
 .bordered {
@@ -29,6 +36,13 @@ body {
 
 .other-size {
   display: none;
+  text-align: left;
+  margin-left: 20px;
+}
+
+#x-size,
+#y-size {
+  display: inherit;
 }
 
 .submit-container {
@@ -53,4 +67,5 @@ body {
 
 #canvas {
   border: black solid;
+  display: none;
 }
