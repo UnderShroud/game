@@ -102,16 +102,26 @@ async function gameIsOn(game, players) {
       render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
       //здесь могла быть анимация
-      currentPlayer.check(xCell, yCell, 0.8);
+      let anime = async () => {
+        let progress = 0;
+        game.nextTurn();
+        do {
+          progress += 50 / 1000;
+          await delay(50);
+          currentPlayer.check(xCell, yCell, progress);
+          if (currentPlayer.checkWinner()) {
+            currentPlayer.congratulation();
+            game.isFinished = true;
+            return;
+          }
+        } while (progress <= 1);
+        //здесь могла быть анимация
+
+        render.currentState(game, players);
+      };
+      anime();
+
       //render.currentState(game, players);
-      //здесь могла быть анимация
-      if (currentPlayer.checkWinner()) {
-        currentPlayer.congratulation();
-        game.isFinished = true;
-        return;
-      }
-      game.nextTurn();
-      render.currentState(game, players);
     }
     //если с ботом, то он продолжает ход
     if (players[game.currentTurn].constructor.name == "AI") {
@@ -231,7 +241,9 @@ const render = {
     const firstHalfProgress = progress > 0.5 ? 1 : progress * 2;
     const secondHalfProgress = progress > 0.5 ? progress * 2 - 1 : 0;
     render.crossFirst(x, y, firstHalfProgress);
-    render.crossSecond(x, y, secondHalfProgress);
+    if (!(secondHalfProgress == 0)) {
+      render.crossSecond(x, y, secondHalfProgress);
+    }
   },
   crossFirst: (x, y, progress) => {
     const [x0, y0] = [
@@ -269,7 +281,7 @@ const render = {
       can.cellSize * (y + 1 / 2) + can.headerHeight,
       can.cellSize * (1 / 2) - can.gap,
       0,
-      2 * Math.PI
+      2 * Math.PI * progress
     );
     ctx.stroke();
   },
@@ -341,7 +353,10 @@ function getCellCoordinates([x, y]) {
     return [undefined, undefined];
   }
 }
-
+//необходима для реализации асинхронности в перерисовке кадров
+async function delay(time) {
+  return await new Promise((resolve) => setTimeout(resolve, time));
+}
 ///////////////////////////////
 //классовая структура проекта//
 ///////////////////////////////
