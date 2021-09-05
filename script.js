@@ -251,6 +251,45 @@ const render = {
     ctx.stroke();
   },
   //анимированная рисовка
+  сrossAnimated: (x, y) => {
+    let t,
+      tHalf = 0;
+    tMax = 1000;
+    requestAnimationFrame((x, y) => {
+      tFirstHalf = t > tMax / 2 ? tMax / 2 : t;
+      tSecondHalf = t > 500 / 2 ? 500 / 2 - t : 0;
+
+      ctx.beginPath();
+      ctx.moveTo(
+        can.gap + can.cellSize * x,
+        can.gap + can.headerHeight + can.cellSize * y
+      );
+      ctx.lineTo(
+        (can.gap + can.cellSize * x) * (1 - tFirstHalf / tMax) +
+          ((-can.gap + can.cellSize * (x + 1)) * tFirstHalf) / tMax,
+        (can.gap + can.headerHeight + can.cellSize * y) *
+          (1 - tFirstHalf / tMax) -
+          (-can.gap + can.headerHeight + can.cellSize * (y + 1)) *
+            (tFirstHalf / tMax)
+      );
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(
+        can.gap + can.cellSize * x,
+        -can.gap + can.headerHeight + can.cellSize * (y + 1)
+      );
+      ctx.lineTo(
+        -can.gap + can.cellSize * (x + 1),
+        can.gap + can.headerHeight + can.cellSize * y
+      );
+      ctx.stroke();
+
+      if (t < tMax) {
+        t += 1;
+      }
+    });
+  },
 };
 
 ////////////////////////////
@@ -309,9 +348,10 @@ class Player {
   }
 
   checkWinner() {
+    let condition;
     for (let i = 0; i < this.xCellSize - 2; i++) {
       for (let j = 0; j < this.yCellSize - 2; j++) {
-        return (
+        condition =
           (this.state[i][j] && this.state[i + 1][j] && this.state[i + 2][j]) ||
           (this.state[i][j + 1] &&
             this.state[i + 1][j + 1] &&
@@ -331,10 +371,13 @@ class Player {
             this.state[i + 2][j + 2]) ||
           (this.state[i][j + 2] &&
             this.state[i + 1][j + 1] &&
-            this.state[i + 2][j])
-        );
+            this.state[i + 2][j]);
+        if (condition) {
+          return true;
+        }
       }
     }
+    return false;
   }
 
   congratulation() {
@@ -375,13 +418,6 @@ const can = {
   gap: 10,
 };
 
-/*
-while (!game.isFinished) {
-  players[game.currentTurn].turn(); //ждет валидного клика и возвращает координаты на сетке
-
-  game.checkWinner();
-}
-*/
 //координаты на канве
 function getCoordinates(canvas, event) {
   const rect = canvas.getBoundingClientRect();
@@ -404,7 +440,7 @@ function getCellCoordinates([x, y]) {
   }
 }
 //
-function checkWinner(player, [xCell, yCell]) {
+/*function checkWinner(player, [xCell, yCell]) {
   return (
     (player[+xCell - 1][+yCell] && player[+xCell + 1][+yCell]) ||
     (player[+xCell - 1][+yCell + 1] && player[xCell + 1][yCell - 1]) ||
@@ -419,4 +455,4 @@ function checkWinner(player, [xCell, yCell]) {
     (player[+xCell - 1][+yCell + 1] && player[xCell - 2][yCell + 2]) ||
     (player[+xCell][+yCell + 1] && player[xCell][yCell + 2])
   );
-}
+}*/
