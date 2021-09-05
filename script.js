@@ -16,9 +16,9 @@ gameSize.addEventListener("click", () => {
   }
 });
 
-//начинаем игру
+//начинаем игру путем нажатия на кнопку
 buttonSubmit.addEventListener("click", startGame);
-
+//сам коллбэк
 function startGame() {
   const state = readForm();
   renameButton();
@@ -26,19 +26,17 @@ function startGame() {
   console.log(game);
   gameIsOn(game, players);
 }
-
+//читаем данные из формы
 function readForm() {
   //PVP or PVE
   let state = [];
   const isAI = document.getElementsByName("is_AI");
   state["isAI"] = isAI[0].checked ? false : true;
-
   //Players names
   state["p1Name"] =
     document.getElementsByName("player_1")[0].value || "Player 1";
   state["p2Name"] =
     document.getElementsByName("player_2")[0].value || "Player 2";
-
   //Field size
   const size = document.getElementsByName("size");
   if (size[3].checked) {
@@ -54,11 +52,11 @@ function readForm() {
   }
   return state;
 }
-
+//переименовываем кнопку начала игры
 function renameButton() {
   buttonSubmit.innerHTML = "<h4>Рестарт</h4>";
 }
-
+//инициализируем объекты
 function initObjects(state) {
   game = new Game(state);
   p1 = new Player(state["p1Name"], state, render.cross);
@@ -69,8 +67,7 @@ function initObjects(state) {
   game.initCanvas();
   return [game, p1, p2, players];
 }
-
-//Здесь жара!!! Основа геймплея здесь
+//Основа геймплея здесь
 async function gameIsOn(game, players) {
   render.currentState(game, players);
   let xCell, yCell, currentPlayer;
@@ -87,7 +84,7 @@ async function gameIsOn(game, players) {
     game.nextTurn();
     render.currentState(game, players);
   }
-
+  //чтение нажатия на canvas
   canvas.addEventListener("mousedown", (event) => {
     let [x, y] = getCoordinates(canvas, event);
     console.log([x, y]);
@@ -104,10 +101,10 @@ async function gameIsOn(game, players) {
       currentPlayer = players[game.currentTurn];
       render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
-
+      //здесь могла быть анимация
       currentPlayer.check(xCell, yCell);
-
       render.currentState(game, players);
+      //здесь могла быть анимация
       if (currentPlayer.checkWinner()) {
         currentPlayer.congratulation();
         game.isFinished = true;
@@ -116,7 +113,7 @@ async function gameIsOn(game, players) {
       game.nextTurn();
       render.currentState(game, players);
     }
-    //если с ботом
+    //если с ботом, то он продолжает ход
     if (players[game.currentTurn].constructor.name == "AI") {
       currentPlayer = players[game.currentTurn];
       console.log(currentPlayer.randomTurn(game));
@@ -125,9 +122,10 @@ async function gameIsOn(game, players) {
       game.state[xCell][yCell] = true;
       render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
-
+      //здесь могла быть анимация
       currentPlayer.check(xCell, yCell);
-
+      render.currentState(game, players);
+      //здесь могла быть анимация
       if (currentPlayer.checkWinner()) {
         currentPlayer.congratulation();
         game.isFinished = true;
@@ -136,6 +134,7 @@ async function gameIsOn(game, players) {
       game.nextTurn();
       render.currentState(game, players);
     }
+    //ничья, если кончились ходы
     if (game.draw()) {
       render.clear();
       render.textHeader("Ничья!");
@@ -145,6 +144,16 @@ async function gameIsOn(game, players) {
   });
 }
 
+//свойства постороения (размеры блоков на canvas). В целом, этот объект может определяться
+//из свойств экрана при нажатии на кнопку старта
+const can = {
+  headerHeight: 100,
+  footerHeight: 50,
+  cellSize: 100,
+  lineWidth: 5,
+  gap: 10,
+};
+//отдельная библиотека с методами прорисовки на canvas
 const render = {
   styleHeader: () => {
     ctx.lineWidth = can.lineWidth;
@@ -291,10 +300,31 @@ const render = {
     });
   },
 };
+//определение координат на canvas
+function getCoordinates(canvas, event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  return [x, y];
+}
+//отождествление координат ячейке игрового поля
+function getCellCoordinates([x, y]) {
+  if (
+    (y > can.headerHeight || y < canvas.height - can.footerHeight) &&
+    x < canvas.width &&
+    y < canvas.height
+  ) {
+    const xCell = Math.trunc(x / can.cellSize);
+    const yCell = Math.trunc((y - can.headerHeight) / can.cellSize);
+    return [xCell, yCell];
+  } else {
+    return [undefined, undefined];
+  }
+}
 
-////////////////////////////
-//starting class structure//
-////////////////////////////
+///////////////////////////////
+//классовая структура проекта//
+///////////////////////////////
 class Game {
   constructor(state) {
     this.turn = 1;
@@ -319,10 +349,18 @@ class Game {
   }
 
   initCanvas() {
+    const windowInnerWidth = window.innerWidth;
     canvas.width = this.xCellSize * can.cellSize;
+    const aspectRatioY = canvas.width / windowInnerWidth;
+    canvas.style.display = "inherit";
     canvas.height =
       can.headerHeight + this.yCellSize * can.cellSize + can.footerHeight;
     document.body.style.maxWidth = canvas.width + "px";
+    //чтобы на мобилках игровое поле не превышало ширину экрана
+    if (aspectRatioY > 1) {
+      canvas.style.width = windowInnerWidth + "px";
+      canvas.style.height = canvas.height / aspectRatioY + "px";
+    }
     render.clear();
     render.grid(this.xCellSize, this.yCellSize);
   }
@@ -409,50 +447,3 @@ class AI extends Player {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 }
-//свойства постороения
-const can = {
-  headerHeight: 100,
-  footerHeight: 50,
-  cellSize: 100,
-  lineWidth: 5,
-  gap: 10,
-};
-
-//координаты на канве
-function getCoordinates(canvas, event) {
-  const rect = canvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
-  return [x, y];
-}
-//соответствующая координатам ячейка
-function getCellCoordinates([x, y]) {
-  if (
-    (y > can.headerHeight || y < canvas.height - can.footerHeight) &&
-    x < canvas.width &&
-    y < canvas.height
-  ) {
-    const xCell = Math.trunc(x / can.cellSize);
-    const yCell = Math.trunc((y - can.headerHeight) / can.cellSize);
-    return [xCell, yCell];
-  } else {
-    return [undefined, undefined];
-  }
-}
-//
-/*function checkWinner(player, [xCell, yCell]) {
-  return (
-    (player[+xCell - 1][+yCell] && player[+xCell + 1][+yCell]) ||
-    (player[+xCell - 1][+yCell + 1] && player[xCell + 1][yCell - 1]) ||
-    (player[+xCell - 1][+yCell + 1] && player[xCell + 1][yCell + 1]) ||
-    (player[+xCell][+yCell - 1] && player[xCell][yCell + 1]) || //и еще немного
-    (player[+xCell + 1][+yCell + 1] && player[xCell + 2][yCell + 2]) ||
-    (player[+xCell + 1][+yCell] && player[xCell + 2][yCell]) ||
-    (player[+xCell + 1][+yCell - 1] && player[xCell + 2][yCell - 2]) ||
-    (player[+xCell][+yCell - 1] && player[xCell][yCell - 2]) ||
-    (player[+xCell - 1][+yCell - 1] && player[xCell - 2][yCell - 2]) ||
-    (player[+xCell - 1][+yCell] && player[xCell - 2][yCell]) ||
-    (player[+xCell - 1][+yCell + 1] && player[xCell - 2][yCell + 2]) ||
-    (player[+xCell][+yCell + 1] && player[xCell][yCell + 2])
-  );
-}*/
