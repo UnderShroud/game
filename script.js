@@ -302,9 +302,15 @@ const render = {
 };
 //определение координат на canvas
 function getCoordinates(canvas, event) {
+  const windowInnerWidth = window.innerWidth;
+  const aspectRatioY = canvas.width / windowInnerWidth;
   const rect = canvas.getBoundingClientRect();
-  const x = event.clientX - rect.left;
-  const y = event.clientY - rect.top;
+  let x = event.clientX - rect.left;
+  let y = event.clientY - rect.top;
+  if (aspectRatioY > 1) {
+    x *= aspectRatioY;
+    y *= aspectRatioY;
+  }
   return [x, y];
 }
 //отождествление координат ячейке игрового поля
