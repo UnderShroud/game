@@ -23,7 +23,6 @@ function startGame() {
   const state = readForm();
   renameButton();
   [game, p1, p2, players] = initObjects(state);
-  console.log(game);
   gameIsOn(game, players);
 }
 //читаем данные из формы
@@ -101,11 +100,10 @@ async function gameIsOn(game, players) {
     game.nextTurn();
     render.currentState(game, players);
   }
-  //чтение нажатия на canvas
-  canvas.addEventListener("mousedown", async (event) => {
+  //callback для нажатия
+  const onClick = async (event) => {
     let playerTurn;
     let [x, y] = getCoordinates(canvas, event);
-    console.log([x, y]);
     let cell = getCellCoordinates([x, y]);
     [xCell, yCell] = cell;
     //если клик обоснован (игра идет, поле не закрашено)
@@ -122,7 +120,6 @@ async function gameIsOn(game, players) {
       currentPlayer.state[xCell][yCell] = true;
       if (currentPlayer.checkWinner()) {
         currentPlayer.congratulation();
-        console.log("Player win!");
         game.isFinished = true;
         await anime();
         return;
@@ -138,7 +135,6 @@ async function gameIsOn(game, players) {
       !game.isFinished
     ) {
       currentPlayer = players[game.currentTurn];
-      console.log(currentPlayer.randomTurn(game));
       [xCell, yCell] = currentPlayer.randomTurn(game);
 
       game.state[xCell][yCell] = true;
@@ -146,7 +142,6 @@ async function gameIsOn(game, players) {
       currentPlayer.state[xCell][yCell] = true;
       if (currentPlayer.checkWinner()) {
         currentPlayer.congratulation();
-        console.log("Player win!");
         game.isFinished = true;
         await anime();
         return;
@@ -165,7 +160,9 @@ async function gameIsOn(game, players) {
       game.isFinished = true;
       return;
     }
-  });
+  };
+  //чтение нажатия на canvas
+  canvas.addEventListener("mousedown", onClick);
 }
 //свойства постороения (размеры блоков на canvas). В целом, этот объект может определяться
 //из свойств экрана при нажатии на кнопку старта
