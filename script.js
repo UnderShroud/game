@@ -101,30 +101,36 @@ async function gameIsOn(game, players) {
       currentPlayer = players[game.currentTurn];
       render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
+      if (currentPlayer.checkWinner()) {
+        currentPlayer.congratulation();
+        console.log("Player win!");
+        game.isFinished = true;
+        return;
+      }
+      game.nextTurn();
       //здесь могла быть анимация
       let anime = async () => {
         let progress = 0;
-        game.nextTurn();
+
         do {
           progress += 50 / 1000;
           await delay(50);
-          currentPlayer.check(xCell, yCell, progress);
-          if (currentPlayer.checkWinner()) {
-            currentPlayer.congratulation();
-            game.isFinished = true;
-            return;
-          }
+          await currentPlayer.check(xCell, yCell, progress);
         } while (progress <= 1);
         //здесь могла быть анимация
-
-        render.currentState(game, players);
+        if (!game.isFinished) {
+          render.currentState(game, players);
+        }
       };
-      anime();
+      anime().then;
 
       //render.currentState(game, players);
     }
     //если с ботом, то он продолжает ход
-    if (players[game.currentTurn].constructor.name == "AI") {
+    if (
+      players[game.currentTurn].constructor.name == "AI" &&
+      !game.isFinished
+    ) {
       currentPlayer = players[game.currentTurn];
       console.log(currentPlayer.randomTurn(game));
       [xCell, yCell] = currentPlayer.randomTurn(game);
@@ -132,21 +138,32 @@ async function gameIsOn(game, players) {
       game.state[xCell][yCell] = true;
       render.currentState(game, players);
       currentPlayer.state[xCell][yCell] = true;
-      //здесь могла быть анимация
-      currentPlayer.check(xCell, yCell, 1);
-      render.currentState(game, players);
-      //здесь могла быть анимация
       if (currentPlayer.checkWinner()) {
         currentPlayer.congratulation();
+        console.log("Player win!");
         game.isFinished = true;
         return;
       }
       game.nextTurn();
-      render.currentState(game, players);
+      //здесь могла быть анимация
+      let anime = async () => {
+        let progress = 0;
+
+        do {
+          progress += 50 / 1000;
+          await delay(50);
+          await currentPlayer.check(xCell, yCell, progress);
+        } while (progress <= 1);
+        //здесь могла быть анимация
+        if (!game.isFinished) {
+          render.currentState(game, players);
+        }
+      };
+      anime();
     }
     //ничья, если кончились ходы
     if (game.draw()) {
-      render.clear();
+      render.clearHeader();
       render.textHeader("Ничья!");
       game.isFinished = true;
       return;
@@ -198,6 +215,10 @@ const render = {
   clear: () => {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+  },
+  clearHeader: () => {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, can.headerHeight);
   },
   grid: (xCellSize, yCellSize) => {
     ctx.lineWidth = can.lineWidth;
@@ -453,7 +474,7 @@ class Player {
   }
 
   congratulation() {
-    render.clear();
+    render.clearHeader();
     render.textHeader(this.name + " выиграл!!!");
   }
 
