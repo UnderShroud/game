@@ -71,6 +71,23 @@ function initObjects(state) {
 async function gameIsOn(game, players) {
   render.currentState(game, players);
   let xCell, yCell, currentPlayer;
+  //функция для анимации
+  const anime = async () => {
+    let progress = 0;
+
+    do {
+      progress += 5 / 300;
+      await delay(5);
+      await currentPlayer.check(xCell, yCell, progress);
+    } while (progress <= 1);
+    //здесь могла быть анимация
+    if (!game.isFinished) {
+      render.currentState(game, players);
+    }
+    return new Promise((resolve, reject) => {
+      resolve("");
+    });
+  };
   //если с ботом и у него первый ход
   if (players[game.currentTurn].constructor.name == "AI" && game.turn == 1) {
     currentPlayer = players[game.currentTurn];
@@ -80,23 +97,25 @@ async function gameIsOn(game, players) {
     ];
     game.state[xCell][yCell] = true;
     currentPlayer.state[xCell][yCell] = true;
-    currentPlayer.check(xCell, yCell, 1);
+    await anime();
     game.nextTurn();
     render.currentState(game, players);
   }
   //чтение нажатия на canvas
-  canvas.addEventListener("mousedown", (event) => {
+  canvas.addEventListener("mousedown", async (event) => {
+    let playerTurn;
     let [x, y] = getCoordinates(canvas, event);
     console.log([x, y]);
     let cell = getCellCoordinates([x, y]);
     [xCell, yCell] = cell;
     //если клик обоснован (игра идет, поле не закрашено)
     if (
-      !(yCell === undefined) &&
-      !game.state[xCell][yCell] &&
-      !game.isFinished &&
-      players[game.currentTurn].constructor.name == "Player"
+      yCell === undefined ||
+      game.state[xCell][yCell] ||
+      game.isFinished ||
+      players[game.currentTurn].constructor.name !== "Player"
     ) {
+    } else {
       game.state[xCell][yCell] = true;
       currentPlayer = players[game.currentTurn];
       render.currentState(game, players);
@@ -105,27 +124,14 @@ async function gameIsOn(game, players) {
         currentPlayer.congratulation();
         console.log("Player win!");
         game.isFinished = true;
+        await anime();
         return;
       }
       game.nextTurn();
       //здесь могла быть анимация
-      let anime = async () => {
-        let progress = 0;
-
-        do {
-          progress += 50 / 1000;
-          await delay(50);
-          await currentPlayer.check(xCell, yCell, progress);
-        } while (progress <= 1);
-        //здесь могла быть анимация
-        if (!game.isFinished) {
-          render.currentState(game, players);
-        }
-      };
-      anime().then;
-
-      //render.currentState(game, players);
+      playerTurn = await anime();
     }
+
     //если с ботом, то он продолжает ход
     if (
       players[game.currentTurn].constructor.name == "AI" &&
@@ -142,28 +148,19 @@ async function gameIsOn(game, players) {
         currentPlayer.congratulation();
         console.log("Player win!");
         game.isFinished = true;
+        await anime();
         return;
       }
       game.nextTurn();
       //здесь могла быть анимация
-      let anime = async () => {
-        let progress = 0;
-
-        do {
-          progress += 50 / 1000;
-          await delay(50);
-          await currentPlayer.check(xCell, yCell, progress);
-        } while (progress <= 1);
-        //здесь могла быть анимация
-        if (!game.isFinished) {
-          render.currentState(game, players);
-        }
-      };
-      anime();
+      await anime();
     }
+
     //ничья, если кончились ходы
-    if (game.draw()) {
+    if (game.draw() && !game.isFinished) {
       render.clearHeader();
+      render.clearFooter();
+      render.textFooter(`Ход ${game.area}/${game.area}`);
       render.textHeader("Ничья!");
       game.isFinished = true;
       return;
@@ -219,6 +216,15 @@ const render = {
   clearHeader: () => {
     ctx.fillStyle = "black";
     ctx.fillRect(0, 0, canvas.width, can.headerHeight);
+  },
+  clearFooter: () => {
+    ctx.fillStyle = "black";
+    ctx.fillRect(
+      0,
+      canvas.height - can.footerHeight,
+      canvas.width,
+      can.footerHeight
+    );
   },
   grid: (xCellSize, yCellSize) => {
     ctx.lineWidth = can.lineWidth;
