@@ -40,8 +40,25 @@ function readForm() {
   //Field size
   const size = document.getElementsByName("size");
   if (size[3].checked) {
-    state["cellsInRow"] = document.getElementById("x-size").value || 3;
-    state["cellsInColumn"] = document.getElementById("y-size").value || 3;
+    state["cellsInRow"] = document.getElementById("x-size").value;
+    state["cellsInColumn"] = document.getElementById("y-size").value;
+    //далее проверка на валидность
+    if (
+      !state["cellsInRow"] ||
+      state["cellsInRow"] < 3 ||
+      state["cellsInRow"] > 10
+    ) {
+      state["cellsInRow"] = 3;
+      document.getElementById("x-size").value = 3;
+    }
+    if (
+      !state["cellsInColumn"] ||
+      state["cellsInColumn"] < 3 ||
+      state["cellsInColumn"] > 10
+    ) {
+      state["cellsInColumn"] = 3;
+      document.getElementById("y-size").value = 3;
+    }
   } else {
     for (let i = 0; i < 3; i++) {
       if (size[i].checked) {
