@@ -1,7 +1,7 @@
 body {
   text-align: center;
   margin: auto;
-  max-width: 1000px;
+  max-width: 600px;
   background-color: rgb(226, 230, 238);
 }
 
@@ -43,6 +43,12 @@ h2 {
 #x-size,
 #y-size {
   display: inherit;
+}
+
+#player_1,
+#player_2 {
+  display: block;
+  margin-left: 10px;
 }
 
 .submit-container {
