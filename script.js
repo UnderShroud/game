@@ -169,4 +169,8 @@ async function gameIsOn(game, players) {
   };
   //чтение нажатия на canvas
   canvas.addEventListener("mousedown", onClick);
+  //удаляем лишний контекст
+  buttonSubmit.addEventListener("mousedown", () => {
+    canvas.removeEventListener("mousedown", onClick);
+  });
 }
